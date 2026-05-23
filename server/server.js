@@ -4,6 +4,7 @@ const cors = require("cors")
 const {clerkMiddleware} = require('@clerk/express')
 const { serve } = require("inngest/express")
 const { inngest, functions } = require("./inngest/index.js")
+const showRouter = require("./routes/show.router")
 const connectDB = require("./config/db")
 const app = express()
 const port = 3000
@@ -20,6 +21,7 @@ app.get('/',(req,res)=>{
     res.send("server is Live")
 })
 app.use("/api/inngest", serve({ client: inngest, functions }));
+app.use('/api/shows',showRouter)
 
 
 app.listen(port, () => {
