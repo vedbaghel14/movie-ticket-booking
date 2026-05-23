@@ -402,7 +402,7 @@ export const dummyBookingData = [
         },
         "amount": 147,
         "bookedSeats": ["A1", "A2","A3"],
-        "isPaid": true,
+        "isPaid": false,
     },
 ]
 

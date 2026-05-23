@@ -1,30 +1,33 @@
-import { dummyShowsData } from '../assets/assets'
+import { dummyBookingData, dummyShowsData } from '../assets/assets'
+import { dateFormat } from '../lib/dateFormat';
+import { useEffect, useState } from 'react';
 
-const bookings = [
-  {
-    id: 'booking-1',
-    movie: dummyShowsData[0],
-    title: 'Alita Battle Angel 2024',
-    duration: '2 hours 15 minutes',
-    dateTime: '13th May 2025 - 5:00 PM',
-    amount: 700,
-    totalTickets: 2,
-    seats: ['B12', 'B13'],
-  },
-  {
-    id: 'booking-2',
-    movie: dummyShowsData[0],
-    title: 'Alita Battle Angel 2024',
-    duration: '2 hours 15 minutes',
-    dateTime: '13th May 2025 - 5:00 PM',
-    amount: 700,
-    totalTickets: 2,
-    seats: ['B12', 'B13'],
-  },
-]
+function timeFormat(runtime) {
+  const hours = Math.floor(runtime / 60);
+  const minutes = runtime % 60;
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+
+  return `${minutes}m`;
+}
 
 const MyBookings = () => {
-  return (
+    const currency = '$';
+    const [bookings, setBookings] = useState([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    const getMyBookings = async () => {
+      setBookings(dummyBookingData)
+      setIsLoading(false)
+    }
+
+    useEffect(() => {
+      getMyBookings()
+    }, [])
+
+  return !isLoading ? (
     <main className="my-bookings-page">
       <section className="my-bookings-content">
         <h1>My Bookings</h1>
@@ -32,19 +35,22 @@ const MyBookings = () => {
         <div className="booking-list">
           {bookings.map((booking) => (
             <article className="booking-card" key={booking.id}>
-              <img src={booking.movie.backdrop_path} alt={booking.title} />
+              <img src={booking.show.movie.poster_path} alt={booking.title} />
 
               <div className="booking-card__details">
-                <h2>{booking.title}</h2>
-                <p>{booking.duration}</p>
-                <time>{booking.dateTime}</time>
+                <h2>{booking.show.movie.title}</h2>
+                <p>{timeFormat(booking.show.movie.runtime)}</p>
+                <time>{dateFormat(booking.show.showDateTime)}</time>
               </div>
 
               <div className="booking-card__summary">
-                <strong>&#8377;{booking.amount}</strong>
+                <strong>{currency}{booking.amount}</strong>
+                {booking.isPaid ? null : (
+                  <button className="primary-button primary-button--small">Pay Now</button>
+                )}
                 <div>
-                  <p>Total Tickets: <b>{booking.totalTickets}</b></p>
-                  <p>Seat Number: <b>{booking.seats.join(', ')}</b></p>
+                  <p>Total Tickets: <b>{booking.bookedSeats.length}</b></p>
+                  <p>Seat Number: <b>{booking.bookedSeats.join(', ')}</b></p>
                 </div>
               </div>
             </article>
@@ -52,7 +58,7 @@ const MyBookings = () => {
         </div>
       </section>
     </main>
-  )
+  ) :  <div className="loader text-center mt-10 font-weight-bold h-">Loading...</div>
 }
 
 export default MyBookings
