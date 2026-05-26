@@ -25,7 +25,10 @@ const MovieCard = ({ movie }) => {
         <h3>{movie.title}</h3>
         <p>{releaseYear} - {genres} - {movie.runtime ? formatRuntime(movie.runtime) : ''}</p>
         <div className="movie-card__actions">
-          <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small">
+          <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small" onClick={()=>window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          })}>
             Buy Ticket
           </Link>
           <span className="movie-card__rating">

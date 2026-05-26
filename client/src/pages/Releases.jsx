@@ -27,7 +27,7 @@ const MovieCard = ({ movie }) => {
 
         <div className="movie-card__actions">
           <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small" onClick={()=>window.scrollTo({
-            top: 100,
+            top: 0,
             behavior: 'smooth'
           })}>
             Buy Ticket
