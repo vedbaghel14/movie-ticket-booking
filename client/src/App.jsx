@@ -15,10 +15,27 @@ import ListBookings from './pages/ListBookings'
 import {Toaster} from 'react-hot-toast'
 import Favourite from './pages/Favourite'
 import { useLocation } from 'react-router-dom'
+import { useAppContext } from './context/Appcontext'
+import { SignIn } from '@clerk/react'
+import { useEffect } from 'react'
 
 const App = () => {
 
+
   const isAdminRoute = useLocation().pathname.startsWith('/admin')
+  const {user} = useAppContext()
+  
+//   const {pathname} = useLocation()
+
+//   useEffect(() => {
+
+//    if (pathname === "/movies") {
+//     window.scrollTo(0, 121)
+//   }
+
+// }, [pathname])
+
+
   return (
     <>
       <Toaster />
@@ -32,12 +49,18 @@ const App = () => {
         <Route path='/movies/:id/:date' element={<SeatLayout />} />
         <Route path='/my-bookings' element={<MyBookings />} />
         <Route path='/favourite' element={<Favourite />} />
-        <Route path='/admin' element={<Navigate to='/admin/dashboard' replace />} />
+        <Route path='/admin/*' element={!user ? (
+          <div className='min-h-screen flex justify-center items-center'>
+            <SignIn fallbackRedirectUrl={'/admin/dashboard'} />
+          </div>
+        ) : (
+          <Navigate to='/admin/dashboard' replace />
+        )} />
         <Route path='/admin/dashboard' element={<AdminDashboard />} />
         <Route path='/admin/add-shows' element={<AddShows />} />
         <Route path='/admin/list-shows' element={<ListShows />} />
         <Route path='/admin/list-bookings' element={<ListBookings />} />
-      </Routes>  
+      </Routes>
       {isAdminRoute ? null : <Footer />}
     </>
   )

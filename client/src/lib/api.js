@@ -15,12 +15,14 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5000/api'
 export async function apiFetch(endpoint, options = {}) {
   const url = `${BASE_URL}${endpoint}`
 
+  const { headers, ...restOptions } = options
+
   const res = await fetch(url, {
+    ...restOptions,
     headers: {
       'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
+      ...(headers ?? {}),
     },
-    ...options,
   })
 
   if (!res.ok) {
@@ -65,39 +67,122 @@ export const api = {
 }
 
 // ---------------------------------------------------------------------------
-// Admin-specific endpoints
+// Admin-specific endpoints  (all require Clerk auth token header)
 // ---------------------------------------------------------------------------
 
 export const adminApi = {
   /**
    * GET /api/admin/dashboard
-   * Expected response shape:
-   * { totalBookings, totalRevenue, totalUser, activeShows[] }
+   * Response: { success, dashboardData: { totalBookings, totalRevenue, totalUser, activeShows[] } }
    */
-  getDashboard: () => api.get('/admin/dashboard'),
+  getDashboard: (token) =>
+    api.get('/admin/dashboard', { headers: { Authorization: `Bearer ${token}` } }),
 
   /**
-   * GET /api/admin/shows
+   * GET /api/admin/all-shows
    */
-  getShows: () => api.get('/admin/shows'),
+  getShows: (token) =>
+    api.get('/admin/all-shows', { headers: { Authorization: `Bearer ${token}` } }),
 
   /**
-   * GET /api/admin/bookings
+   * GET /api/admin/all-bookings
    */
-  getBookings: () => api.get('/admin/bookings'),
+  getBookings: (token) =>
+    api.get('/admin/all-bookings', { headers: { Authorization: `Bearer ${token}` } }),
 
   /**
-   * GET /api/movies  (or /api/admin/movies)
-   * Returns the list of all movies available for creating shows.
+   * GET /api/shows/nowplaying — fetches now-playing movies from TMDB
    */
-  getMovies: () => api.get('/movies'),
+  getNowPlayingMovies: (token) =>
+    api.get('/shows/nowplaying', { headers: { Authorization: `Bearer ${token}` } }),
 
   /**
-   * POST /api/admin/shows
-   * Body: { movieId, showPrice, dateTimes[] }
-   * Creates one or more shows for the given movie at the selected times.
+   * POST /api/shows/add
+   * Body: { movieId, showsInput: [{ date, time: [] }], showPrice }
    */
-  createShow: (data) => api.post('/admin/shows', data),
+  createShow: (data, token) =>
+    api.post('/shows/add', data, { headers: { Authorization: `Bearer ${token}` } }),
+}
+
+// ---------------------------------------------------------------------------
+// Public show endpoints  (no auth required)
+// ---------------------------------------------------------------------------
+
+export const showApi = {
+  /**
+   * GET /api/shows/all  — list of unique movies with active shows
+   * Response: { success, shows: movie[] }
+   */
+  getAll: () => api.get('/shows/all'),
+
+  /**
+   * GET /api/shows/:movieId  — dates × times for a single movie
+   * Response: { success, dateTime: {}, movie }
+   */
+  getSingle: (movieId) => api.get(`/shows/${movieId}`),
+
+  /**
+   * GET /api/shows/public/nowplaying  — now playing movies from TMDB (public)
+   * Response: { success, movies: movie[] }
+   */
+  getPublicNowPlaying: () => api.get('/shows/public/nowplaying'),
+
+  /**
+   * GET /api/shows/public/trailers  — YouTube trailers for now playing movies (public)
+   * Response: { success, trailers: [{ image, videoUrl, title }] }
+   */
+  getPublicTrailers: () => api.get('/shows/public/trailers'),
+}
+
+// ---------------------------------------------------------------------------
+// Booking endpoints
+// ---------------------------------------------------------------------------
+
+export const bookingApi = {
+  /**
+   * GET /api/booking/seats/:showId
+   * Response: { success, occupiedSeats: string[] }
+   */
+  getOccupiedSeats: (showId) => api.get(`/booking/seats/${showId}`),
+
+  /**
+   * POST /api/booking/create
+   * Body: { showId, selectedSeats: string[] }
+   * Auth header with Clerk token required.
+   */
+  create: (data, token) =>
+    api.post('/booking/create', data, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+}
+
+// ---------------------------------------------------------------------------
+// User endpoints  (require Clerk auth token)
+// ---------------------------------------------------------------------------
+
+export const userApi = {
+  /**
+   * GET /api/user/bookings
+   * Response: { success, bookings }
+   */
+  getBookings: (token) =>
+    api.get('/user/bookings', { headers: { Authorization: `Bearer ${token}` } }),
+
+  /**
+   * POST /api/user/update-favourite
+   * Body: { movieId }
+   */
+  toggleFavourite: (movieId, token) =>
+    api.post('/user/update-favourite', { movieId }, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  /**
+   * GET /api/user/favourites
+   * Response: { success, movies }
+   */
+  getFavourites: (token) =>
+    api.get('/user/favourites', { headers: { Authorization: `Bearer ${token}` } }),
 }
 
 export default api

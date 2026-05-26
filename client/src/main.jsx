@@ -4,10 +4,13 @@ import App from './App.jsx'
 import { BrowserRouter } from 'react-router-dom'
 import { ClerkProvider } from '@clerk/react'
 import { Toaster } from 'react-hot-toast'
+import { AppProvider } from './context/Appcontext.jsx'
 createRoot(document.getElementById('root')).render(
   <ClerkProvider>
     <BrowserRouter>
+      <AppProvider>
       <App />
+      </AppProvider>
      <Toaster
  
   toastOptions={{

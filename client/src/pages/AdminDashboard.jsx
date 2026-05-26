@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ArrowRight, Star, Users, Wallet, Film } from 'lucide-react'
 import AdminShell from '../components/AdminShell'
-import { dummyDashboardData } from '../assets/assets'
 import { dateFormat } from '../lib/dateFormat'
 import { adminApi } from '../lib/api'
+import { useAppContext } from '../context/Appcontext'
+import { imageUrl } from '../lib/imageUrl'
 
 // ---------------------------------------------------------------------------
-// Dashboard cards configuration — matches the video's dashboardCards array
+// Dashboard cards configuration
 // ---------------------------------------------------------------------------
 
 const CARD_ICONS = {
@@ -29,8 +30,8 @@ const CARD_LABELS = {
 
 const AdminDashboard = () => {
   const currency = import.meta.env.VITE_CURRENCY_SYMBOL ?? '$'
+  const { getToken, refreshKey } = useAppContext()
 
-  // ---- state -----------------------------------------------------------
   const [dashboardData, setDashboardData] = useState({
     totalBookings: 0,
     totalRevenue: 0,
@@ -38,109 +39,104 @@ const AdminDashboard = () => {
     activeShows: [],
   })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // ---- derive the stat cards array (matching video's dashboardCards) ---
   const dashboardCards = [
-    {
-      title: CARD_LABELS.totalBookings,
-      value: dashboardData.totalBookings,
-      icon: CARD_ICONS.totalBookings,
-    },
-    {
-      title: CARD_LABELS.totalRevenue,
-      value: `${currency}${dashboardData.totalRevenue}`,
-      icon: CARD_ICONS.totalRevenue,
-    },
-    {
-      title: CARD_LABELS.activeMovies,
-      value: dashboardData.activeShows.length,
-      icon: CARD_ICONS.activeMovies,
-    },
-    {
-      title: CARD_LABELS.totalUser,
-      value: dashboardData.totalUser,
-      icon: CARD_ICONS.totalUser,
-    },
+    { title: CARD_LABELS.totalBookings, value: dashboardData.totalBookings, icon: CARD_ICONS.totalBookings },
+    { title: CARD_LABELS.totalRevenue, value: `${currency}${dashboardData.totalRevenue}`, icon: CARD_ICONS.totalRevenue },
+    { title: CARD_LABELS.activeMovies, value: dashboardData.activeShows.length, icon: CARD_ICONS.activeMovies },
+    { title: CARD_LABELS.totalUser, value: dashboardData.totalUser, icon: CARD_ICONS.totalUser },
   ]
 
-  // ---- data fetcher ----------------------------------------------------
   const fetchDashboard = useCallback(async () => {
     setLoading(true)
-
+    setError(null)
     try {
-      const data = await adminApi.getDashboard()
-      setDashboardData(data)
+      const token = await getToken()
+      const res = await adminApi.getDashboard(token)
+      if (res.success) {
+        setDashboardData(res.dashboardData)
+      } else {
+        setError(res.message || 'Failed to load dashboard data.')
+      }
     } catch (err) {
-      console.warn('[AdminDashboard] Backend unreachable, using dummy data.', err.message)
-      // Simulate network delay so the loading state is visible (matching video)
-      await new Promise((r) => setTimeout(r, 600))
-      setDashboardData(dummyDashboardData)
+      console.warn('[AdminDashboard] Backend unreachable.', err.message)
+      setError('Could not connect to server. Please ensure the backend is running.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [getToken])
 
-  // ---- initial fetch ---------------------------------------------------
   useEffect(() => {
     fetchDashboard()
-  }, [fetchDashboard])
+  }, [fetchDashboard, refreshKey])
 
-  // ---- render ----------------------------------------------------------
-  return (
-    <AdminShell title="Dashboard">
-      {!loading ? (
-        <>
-          {/* ---- stat cards ------------------------------------------- */}
-          <div className="dashboard-top-cards">
-            {dashboardCards.map((card, idx) => (
-              <article key={idx} className="dashboard-card">
-                <span className="dashboard-card__icon">{card.icon}</span>
-                <p>{card.title}</p>
-                <strong>{card.value}</strong>
-              </article>
-            ))}
-          </div>
-
-          {/* ---- active shows section --------------------------------- */}
-          <section className="admin-section">
-            <div className="section-header admin-section-header">
-              <div>
-                <h2>Active Movies</h2>
-                <p>Upcoming shows currently live in the theatre.</p>
-              </div>
-              <a href="/admin/add-shows" className="primary-button primary-button--small">
-                Add Show
-                <ArrowRight size={14} />
-              </a>
-            </div>
-
-            <div className="admin-show-grid">
-              {dashboardData.activeShows.slice(0, 3).map((show) => (
-                <article key={show._id} className="admin-show-card">
-                  <img src={show.movie.backdrop_path} alt={show.movie.title} />
-                  <div className="admin-show-card__body">
-                    <p>{show.movie.title}</p>
-                    <strong>
-                      {currency}
-                      {show.showPrice}
-                    </strong>
-                    <div className="admin-show-card__meta">
-                      <span>
-                        <Star size={14} /> {show.movie.vote_average?.toFixed(1) ?? '4.5'}
-                      </span>
-                      <span>{dateFormat(show.showDateTime)}</span>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        </>
-      ) : (
-        /* ---- loading state (matching video's pattern) -------------- */
+  if (loading) {
+    return (
+      <AdminShell title="Dashboard">
         <div className="dashboard-loading">
           <p>Loading dashboard...</p>
         </div>
+      </AdminShell>
+    )
+  }
+
+  if (error) {
+    return (
+      <AdminShell title="Dashboard">
+        <div className="admin-empty-state">
+          <p>{error}</p>
+          <button className="primary-button primary-button--small" type="button" onClick={fetchDashboard}>
+            Retry
+          </button>
+        </div>
+      </AdminShell>
+    )
+  }
+
+  return (
+    <AdminShell title="Dashboard">
+      {/* ---- stat cards ---- */}
+      <div className="dashboard-top-cards">
+        {dashboardCards.map((card, idx) => (
+          <article key={idx} className="dashboard-card">
+            <span className="dashboard-card__icon">{card.icon}</span>
+            <p>{card.title}</p>
+            <strong>{card.value}</strong>
+          </article>
+        ))}
+      </div>
+
+      {/* ---- active shows section ---- */}
+      {dashboardData.activeShows.length > 0 && (
+        <section className="admin-section">
+          <div className="section-header admin-section-header">
+            <div>
+              <h2>Active Movies</h2>
+              <p>Upcoming shows currently live in the theatre.</p>
+            </div>
+            <a href="/admin/add-shows" className="primary-button primary-button--small">
+              Add Show
+              <ArrowRight size={14} />
+            </a>
+          </div>
+
+          <div className="admin-show-grid">
+            {dashboardData.activeShows.slice(0, 3).map((show) => (
+              <article key={show._id} className="admin-show-card">
+                <img src={imageUrl(show.movie.backdrop_path)} alt={show.movie.title} />
+                <div className="admin-show-card__body">
+                  <p>{show.movie.title}</p>
+                  <strong>{currency}{show.showPrice}</strong>
+                  <div className="admin-show-card__meta">
+                    <span><Star size={14} /> {show.movie.vote_average?.toFixed(1) ?? '4.5'}</span>
+                    <span>{dateFormat(show.showDateTime)}</span>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       )}
     </AdminShell>
   )

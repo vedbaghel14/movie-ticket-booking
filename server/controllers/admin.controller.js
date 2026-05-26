@@ -1,39 +1,54 @@
 const bookingModel = require("../models/booking.model")
+const showModel = require("../models/show.model")
 const userModel = require("../models/user.model")
 
 //api to check if user is admin or not
 const isAdmin = async (req, res) => {
-    res.json({sucess:true,isAdmin:true})
+    res.json({success:true,isAdmin:true})
 }
 
 //api to get dashboard data
 const getDashboardData = async (req, res) => {
     try{
        const bookings = await bookingModel.find({isPaid:true})
-        const activeShows = await showModel.find({showDateTime:{$gte:Date.now()}}).populate('movie')
+        const allShows = await showModel.find({}).populate('movie')
+        const now = new Date()
+        const activeShows = allShows.filter(show => {
+            const dt = show.showDateTime instanceof Date
+                ? show.showDateTime
+                : new Date(show.showDateTime);
+            return !isNaN(dt.getTime()) && dt >= now;
+        })
         const totalUser = await userModel.countDocuments()
 
         const dashboardData = {
             totalBookings:bookings.length,
-            totalRevenue:bookings.reduce((acc,booking)=>acc+booking.totalAmount,0),
+            totalRevenue:bookings.reduce((acc,booking)=>acc+booking.amount,0),
             activeShows,
             totalUser
         }
-        res.json({sucess:true,dashboardData})
+        res.json({success:true,dashboardData})
     }
     catch(err){
-        res.json({sucess:false,message:err.message})
-}}
+        res.json({success:false,message:err.message})
+    }}
 
 
 //api to get all shows
 const getAllShows = async (req, res) => {
     try{
-        const shows = await showModel.find({showDateTime:{$gte:Date.now()}}).populate('movie').sort({showDateTime:1})
-        res.json({sucess:true,shows})
+        const allShows = await showModel.find({}).populate('movie').sort({showDateTime:1})
+        const now = new Date()
+        const shows = allShows.filter(show => {
+            const dt = show.showDateTime instanceof Date
+                ? show.showDateTime
+                : new Date(show.showDateTime);
+            return !isNaN(dt.getTime()) && dt >= now;
+        })
+        res.json({success:true,shows})
     }
     catch(err){
-        res.json({sucess:false,message:err.message})
+        res.json({success:false,message:err.message})
     }
 
 }
@@ -48,10 +63,10 @@ const getAllBookings = async (req, res) => {
             }
         }).sort({createdAt:-1})
         
-        res.json({sucess:true,bookings})
+        res.json({success:true,bookings})
     }
     catch(err){
-        res.json({sucess:false,message:err.message})
+        res.json({success:false,message:err.message})
     }
 }
 

@@ -1,7 +1,6 @@
 const express = require('express');
 const { protectAdmin } = require('../middlewares/auth.middlewares');
-const { getDashboardData, getAllBookings, isAdmin } = require('../controllers/admin.controller');
-const { getAllShows } = require('../controllers/show.controller');
+const { getDashboardData, getAllBookings, isAdmin, getAllShows } = require('../controllers/admin.controller');
 
 const adminrouter = express.Router();
 

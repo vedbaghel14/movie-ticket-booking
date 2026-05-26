@@ -37,12 +37,11 @@ const createBooking = async (req,res) => {
         const booking = await bookingModel.create({
             user:userId,
             show:showId,
-            seats:selectedSeats,
+            bookedSeats:selectedSeats,
             amount:showData.showPrice * selectedSeats.length,
-            bookedSeats:selectedSeats
         })
 
-        selectedSeats.map(()=>{
+        selectedSeats.forEach((seat) => {
             showData.occupiedSeats[seat] = userId;
         })
 

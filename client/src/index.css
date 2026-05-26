@@ -534,7 +534,7 @@ img {
   grid-template-columns: 260px minmax(0, 1fr);
   gap: 34px;
   align-items: center;
-  margin: 210px auto 0;
+  margin: 120px auto 0;
 }
 
 .movie-details-hero__poster {
@@ -1008,10 +1008,15 @@ img {
 }
 
 .theatres-page,
-.releases-page,
-.movies-page {
-  padding-top: 120px;
-  padding-bottom: 120px;
+.releases-page
+ {
+  padding-top: 100px;
+  padding-bottom: 50px;
+}
+
+.favourite-page{
+  padding-top: 30px;
+  padding-bottom: 50px;
 }
 
 .theatres-grid {
@@ -1617,6 +1622,8 @@ img {
   .trailers-section {
     padding-bottom: 150px;
   }
+
+  
 
   .site-footer__grid {
     grid-template-columns: 1fr 1fr;
