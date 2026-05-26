@@ -5,6 +5,7 @@ import { useAppContext } from '../context/Appcontext'
 import { showApi } from '../lib/api'
 import { assets } from '../assets/assets'
 import { imageUrl } from '../lib/imageUrl'
+import BackgroundGlow from '../components/BackgroundGlow'
 
 const formatRuntime = (runtime) => {
   const hours = Math.floor(runtime / 60)
@@ -26,7 +27,7 @@ const MovieCard = ({ movie }) => {
         <h3>{movie.title}</h3>
         <p>{releaseYear} - {genres} - {movie.runtime ? formatRuntime(movie.runtime) : ''}</p>
         <div className="movie-card__actions">
-          <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small">
+          <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small" onClick={() => window.scrollTo(0, 0)}>
             Buy Ticket
           </Link>
           <span className="movie-card__rating">
@@ -118,15 +119,18 @@ const Home = () => {
       <section className="content-section now-showing">
         <div className="section-header">
           <h2>Now Showing</h2>
+          
           <Link to="/movies" onClick={() => { window.scrollTo(0, 0) }}>
             View All
             <ArrowRight size={15} className='group-hover:translate-x-0.5 transition w-4.5 h-4.5' />
           </Link>
+        
         </div>
+
 
         {movieList.length > 0 ? (
           <div className="movies-grid">
-            {movieList.slice(0, 8).map((movie) => (
+            {movieList.slice(0, 4).map((movie) => (
               <MovieCard key={movie._id} movie={movie} />
             ))}
           </div>
@@ -165,7 +169,7 @@ const Home = () => {
             </div>
 
             <div className="trailer-thumbs">
-              {trailers.map((trailer, index) => (
+              {trailers.slice(0, 4).map((trailer, index) => (
                 <a
                   key={trailer.videoUrl}
                   href={trailer.videoUrl.replace("watch?v=", "embed/")}
