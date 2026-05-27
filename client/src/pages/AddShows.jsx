@@ -6,6 +6,7 @@ import { kConverter } from '../lib/kConverter'
 import { adminApi } from '../lib/api'
 import { useAppContext } from '../context/Appcontext'
 import { imageUrl } from '../lib/imageUrl'
+import Loading from '../components/Loading'
 
 // ---------------------------------------------------------------------------
 // AddShows — admin page for creating new screenings
@@ -42,6 +43,7 @@ const AddShows = () => {
   }, [getToken])
 
   useEffect(() => {
+
     fetchNowPlayingMovies()
   }, [fetchNowPlayingMovies])
 
@@ -131,10 +133,10 @@ const AddShows = () => {
     <AdminShell title="Add Shows" subtitle="Create new screenings for existing movies.">
       <section className="admin-add-shows">
         <p className="admin-section-label">Now Playing Movies</p>
-        <div className="admin-movie-cards">
-          {loadingMovies ? (
-            <p className="admin-form__hint">Loading movies…</p>
-          ) : nowPlayingMovies.length > 0 ? (
+        {(loadingMovies) ? <Loading text="🎬 Loading Movies..." subtitle="Fetching currently playing movies for selection." /> : (
+          <div className="max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="admin-movie-cards">
+           {nowPlayingMovies.length > 0 ? (
             nowPlayingMovies.map((movie) => {
               const isSelected = selectedMovie?._id === movie._id
               const genres = Array.isArray(movie.genres) ? movie.genres : []
@@ -173,6 +175,10 @@ const AddShows = () => {
             </div>
           )}
         </div>
+          </div>)}
+          
+         
+           
 
           {/* ---- show form ---- */}
           <div className="admin-show-form">

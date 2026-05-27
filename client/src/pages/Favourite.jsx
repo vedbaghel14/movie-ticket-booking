@@ -62,8 +62,52 @@ const Favourite = () => {
       </section>
     </main>
   ) : (
-    <div>
-      <h1 className='text-3xl font-bold text-center'>No favourite movies yet</h1>
+    <div className="h-screen w-full flex justify-center items-center ">
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-6">
+
+  {/* Icon */}
+  <div className="text-7xl mb-6 animate-pulse">
+    ❤️
+  </div>
+
+  {/* Heading */}
+  <h1 className="
+    text-4xl md:text-5xl
+    font-black
+    bg-gradient-to-r
+    from-pink-500
+    via-red-500
+    to-orange-400
+    bg-clip-text
+    text-transparent
+    tracking-tight
+  ">
+    No Favourite Movies Yet
+  </h1>
+
+  {/* Subtitle */}
+  <p className="
+    mt-5
+    text-zinc-400
+    text-lg md:text-xl
+    max-w-2xl
+    leading-relaxed
+  ">
+    Start exploring movies and add them to your favourites to build your personal watchlist.
+  </p>
+
+  {/* Decorative Glow */}
+  <div className="
+    absolute
+    w-[300px]
+    h-[300px]
+    bg-pink-500/10
+    blur-[120px]
+    rounded-full
+    pointer-events-none
+  "></div>
+
+</div>
     </div>
   )
 }

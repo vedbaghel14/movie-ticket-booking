@@ -1607,6 +1607,9 @@ img {
     grid-template-columns: 1fr;
   }
 
+
+ 
+
   .datetime-row {
     grid-template-columns: 1fr;
   }
@@ -2110,3 +2113,11 @@ img {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(to bottom, #f472b6, #f87171);
 }
+
+
+
+
+
+
+
+

@@ -3,6 +3,7 @@ import { dateFormat } from '../lib/dateFormat'
 import { userApi } from '../lib/api'
 import { useAppContext } from '../context/Appcontext'
 import { imageUrl } from '../lib/imageUrl'
+import Loading from '../components/Loading'
 
 function timeFormat(runtime) {
   const hours = Math.floor(runtime / 60)
@@ -42,7 +43,7 @@ const MyBookings = () => {
 
   if (isLoading) {
     return (
-      <div className="loader text-center mt-10 font-weight-bold">Loading your bookings…</div>
+      <Loading text="🎟️ Loading Your Bookings..." subtitle="Fetching your reservations, please wait." />
     )
   }
 
