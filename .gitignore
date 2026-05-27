@@ -3,7 +3,7 @@ node_modules/
 
 # Environment variables
 .env
-client/.env
+client/.env.*
 
 # Editor
 .vscode/
