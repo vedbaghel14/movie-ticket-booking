@@ -6,6 +6,7 @@ import { showApi } from '../lib/api'
 import { assets } from '../assets/assets'
 import { imageUrl } from '../lib/imageUrl'
 import BackgroundGlow from '../components/BackgroundGlow'
+import Loading from '../components/Loading'
 
 const formatRuntime = (runtime) => {
   const hours = Math.floor(runtime / 60)
@@ -150,9 +151,9 @@ const Home = () => {
       <section className="content-section trailers-section">
         <h2>Trailers</h2>
         {trailersLoading ? (
-          <div className="flex justify-center items-center py-16">
-            <Loader2 size={24} className="spin-icon" style={{ color: '#fff' }} />
-          </div>
+         <>
+         <Loading text="🎬 Loading Trailers..." subtitle="Fetching the latest trailers for you." />
+         </>
         ) : trailers.length > 0 && currentTrailer ? (
           <>
             <div className="w-full max-w-5xl mx-auto mt-6 aspect-video rounded-2xl overflow-hidden">

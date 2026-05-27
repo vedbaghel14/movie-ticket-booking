@@ -9,6 +9,7 @@ const connectDB = require("./config/db")
 const bookingRouter = require("./routes/booking.router.js")
 const adminrouter = require("./routes/admin.router.js")
 const userRouter = require("./routes/user.router.js")
+const theatersRouter = require("./routes/theater.router.js")
 const app = express()
 const port = 3000
 
@@ -28,6 +29,7 @@ app.use('/api/shows',showRouter)
 app.use('/api/booking', bookingRouter)
 app.use('/api/admin',adminrouter)
 app.use('/api/user', userRouter)
+app.use('/api/theatres',theatersRouter)
 
 app.listen(port, () => {
     console.log("server is running on server",port)

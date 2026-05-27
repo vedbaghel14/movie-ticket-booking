@@ -4,6 +4,7 @@ import { useAppContext } from '../context/Appcontext'
 import { useEffect, useRef, useState } from 'react'
 import { showApi } from '../lib/api'
 import { imageUrl } from '../lib/imageUrl'
+import Loading from '../components/Loading'
 
 const formatRuntime = (runtime) => {
   const hours = Math.floor(runtime / 60)
@@ -93,10 +94,12 @@ const Movies = () => {
 
   // ---- loading state ----
   if (loading && movieList.length === 0) {
+    const text = "🎬 Loading Movies..."
+    const subtitle = "Please wait while we fetch the latest movies."
     return (
-      <div className="flex justify-center items-center py-24">
-        <Loader2 size={28} className="spin-icon" style={{ color: '#e11d48' }} />
-      </div>
+    <>
+    <Loading text={text} subtitle={subtitle} />
+    </>
     )
   }
 

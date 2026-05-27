@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { showApi } from '../lib/api'
 import { imageUrl } from '../lib/imageUrl'
+import Loading from '../components/Loading'
 
 const formatRuntime = (runtime) => {
   const hours = Math.floor(runtime / 60)
@@ -26,7 +27,7 @@ const MovieCard = ({ movie }) => {
         <p>{releaseYear} - {genres} - {movie.runtime ? formatRuntime(movie.runtime) : ''}</p>
 
         <div className="movie-card__actions">
-          <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small" onClick={()=>window.scrollTo({
+          <Link to={`/movie/${movie._id}`} className="primary-button primary-button--small" onClick={() => window.scrollTo({
             top: 0,
             behavior: 'smooth'
           })}>
@@ -51,11 +52,18 @@ const Releases = () => {
     let cancelled = false
     const fetchReleases = async () => {
       try {
+        const cachedReleases = sessionStorage.getItem("recentReleases")
+        if (cachedReleases) {
+          setRecentReleases(JSON.parse(cachedReleases))
+          setLoading(false)
+          return
+        }
         const data = await showApi.getPublicNowPlaying()
         if (!cancelled && data.success) {
           const sorted = data.movies
             .sort((a, b) => new Date(b.release_date) - new Date(a.release_date))
           setRecentReleases(sorted)
+          sessionStorage.setItem("recentReleases", JSON.stringify(sorted))
         }
       } catch (err) {
         console.warn('[Releases] Could not fetch now playing.', err.message)
@@ -68,20 +76,26 @@ const Releases = () => {
     return () => { cancelled = true }
   }, [])
 
+    if (loading) {
+      const text = "🎬 Loading New Releases..."
+      const subtitle = "Fetching the latest blockbuster movies for you."
+    return (
+      <>
+      <Loading text={text} subtitle={subtitle} />
+      </>
+    );
+  }
+
   return (
     <main className="releases-page">
       <section className="content-section">
         <div className="section-header">
           <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-red-500 to-yellow-400 bg-clip-text text-transparent tracking-tight mb-8">
-  🎬 New Releases
-</h1>
+            🎬 New Releases
+          </h1>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center py-24">
-            <Loader2 size={28} className="spin-icon" style={{ color: '#e11d48' }} />
-          </div>
-        ) : recentReleases.length > 0 ? (
+       {recentReleases.length > 0 ? (
           <div className="movies-grid">
             {recentReleases.map((movie) => (
               <MovieCard key={movie._id} movie={movie} />
@@ -92,6 +106,7 @@ const Releases = () => {
             <p>No new releases available at the moment.</p>
           </div>
         )}
+
       </section>
     </main>
   )
