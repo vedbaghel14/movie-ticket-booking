@@ -155,6 +155,10 @@ const verifyPaymentSession = async (req, res) => {
     if (!booking.isPaid) {
       booking.isPaid = true
       await booking.save()
+      await inngest.send({
+        name: 'app/show.booked',
+        data: { bookingId: booking._id.toString() },
+      })
     }
 
     res.status(200).send({ success: true })
