@@ -238,16 +238,12 @@ const sendShowReminders = inngest.createFunction(
       now.getTime() + 8 * 60 * 60 * 1000
     );
 
-    const windowStart = new Date(
-      in8Hours.getTime() - 10 * 60 * 1000
-    );
-
     const reminderTasks = await step.run(
       "prepare-reminder-tasks",
       async () => {
         const shows = await showModel.find({
           showDateTime: {
-            $gte: windowStart,
+            $gte: now,
             $lt: in8Hours,
           },
         }).populate("movie");
@@ -312,8 +308,7 @@ const sendShowReminders = inngest.createFunction(
                       <p>
                         Just a reminder that your movie
                         <strong>${task.movieTitle}</strong>
-                        starts in approximately
-                        <strong>8 hours</strong>.
+                        starts soon.
                       </p>
 
                       <div style="background:#fafafa;border:1px solid #eee;padding:20px;border-radius:8px;margin:20px 0;">
