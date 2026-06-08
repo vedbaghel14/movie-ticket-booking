@@ -1,6 +1,7 @@
 const showModel = require('../models/show.model')
 const bookingModel = require('../models/booking.model')
 const stripe = require('stripe')
+const { inngest } = require('../inngest')
 
 const checkAvailability = async (showId, selectedSeats) => {
   try {
@@ -79,7 +80,13 @@ const createBooking = async (req, res) => {
     booking.paymentLink = session.url
     booking.checkoutSessionId = session.id
     await booking.save()
-
+    //run inngest shedule function to check payment status after 10 minutes
+    await inngest.send({
+        name:"app/checkpayment",
+        data:{
+            bookingId:booking._id.toString()
+        }
+    })
     res.status(200).send({ success: true, url: session.url })
   } catch (err) {
     console.error('[createBooking]', err)
