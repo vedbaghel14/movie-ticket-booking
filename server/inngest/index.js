@@ -224,9 +224,254 @@ async ({ event, step }) => {
   </div>`
     })
 })
+const sendShowReminders = inngest.createFunction(
+  {
+    id: "send-show-reminders",
+    triggers: [{
+      cron: "0 */8 * * *",
+    }],
+  },
+  async ({ step }) => {
+    const now = new Date();
 
+    const in8Hours = new Date(
+      now.getTime() + 8 * 60 * 60 * 1000
+    );
+
+    const windowStart = new Date(
+      in8Hours.getTime() - 10 * 60 * 1000
+    );
+
+    const reminderTasks = await step.run(
+      "prepare-reminder-tasks",
+      async () => {
+        const shows = await showModel.find({
+          showDateTime: {
+            $gte: windowStart,
+            $lt: in8Hours,
+          },
+        }).populate("movie");
+
+        const tasks = [];
+
+        for (const show of shows) {
+          if (!show.movie || !show.occupiedSeats) continue;
+
+          const userIds = [
+            ...new Set(Object.values(show.occupiedSeats)),
+          ];
+
+          if (userIds.length === 0) continue;
+
+          const users = await usermodel.find({
+            _id: { $in: userIds },
+          }).select("name email");
+
+          for (const user of users) {
+            tasks.push({
+              userEmail: user.email,
+              userName: user.name,
+              movieTitle: show.movie.title,
+              showDateTime: show.showDateTime,
+            });
+          }
+        }
+
+        return tasks;
+      }
+    );
+
+    if (reminderTasks.length === 0) {
+      return {
+        sent: 0,
+        message: "No reminders to send",
+      };
+    }
+
+    const results = await step.run(
+      "send-all-reminders",
+      async () => {
+        return Promise.allSettled(
+          reminderTasks.map((task) =>
+            sendEmail({
+              to: task.userEmail,
+              subject: `🎬 Reminder: ${task.movieTitle} starts soon`,
+              body: `
+                <div style="font-family:Arial,sans-serif;background:#f4f4f4;padding:20px;">
+                  <div style="max-width:600px;margin:auto;background:#fff;border-radius:12px;overflow:hidden;">
+                    
+                    <div style="background:#E50914;padding:25px;text-align:center;">
+                      <h1 style="color:#fff;margin:0;">
+                        🎬 Movie Reminder
+                      </h1>
+                    </div>
+
+                    <div style="padding:30px;">
+                      <h2>Hi ${task.userName},</h2>
+
+                      <p>
+                        Just a reminder that your movie
+                        <strong>${task.movieTitle}</strong>
+                        starts in approximately
+                        <strong>8 hours</strong>.
+                      </p>
+
+                      <div style="background:#fafafa;border:1px solid #eee;padding:20px;border-radius:8px;margin:20px 0;">
+                        <p>
+                          <strong>🎥 Movie:</strong>
+                          ${task.movieTitle}
+                        </p>
+
+                        <p>
+                          <strong>📅 Date:</strong>
+                          ${new Date(
+                            task.showDateTime
+                          ).toLocaleDateString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                          })}
+                        </p>
+
+                        <p>
+                          <strong>⏰ Time:</strong>
+                          ${new Date(
+                            task.showDateTime
+                          ).toLocaleTimeString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+
+                      <p>
+                        Grab your popcorn 🍿 and enjoy the show!
+                      </p>
+                    </div>
+
+                    <div style="background:#f8f9fa;padding:20px;text-align:center;color:#777;">
+                      <p>
+                        Thanks for choosing
+                        <strong>QuickShow</strong>
+                      </p>
+                    </div>
+
+                  </div>
+                </div>
+              `,
+            })
+          )
+        );
+      }
+    );
+
+    const sent = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    return {
+      sent,
+      failed,
+      message: `Sent ${sent} reminder(s), ${failed} failed.`,
+    };
+    
+  }
+);
+
+const sendNewShowNotification = inngest.createFunction(
+  {
+    id: "send-new-show-notification",
+    triggers: [
+      {
+        event: "app/show.added",
+      },
+    ],
+  },
+  async ({ event, step }) => {
+    const { movieTitle, movieId } = event.data;
+
+    const users = await usermodel.find({}).select("name email");
+
+    return await step.run("send-notifications", async () => {
+      return Promise.allSettled(
+        users.map((user) =>
+          sendEmail({
+            to: user.email,
+            subject: `🎬 New Show Added: ${movieTitle}`,
+            body: `
+              <div style="font-family:Arial,sans-serif;background:#f4f4f4;padding:20px;">
+                <div style="max-width:600px;margin:auto;background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+
+                  <!-- Header -->
+                  <div style="background:linear-gradient(135deg,#E50914,#B20710);padding:30px;text-align:center;">
+                    <h1 style="color:white;margin:0;">🎬 QuickShow</h1>
+                    <p style="color:#ffe5e5;margin-top:10px;">
+                      A New Movie Show Is Now Available!
+                    </p>
+                  </div>
+
+                  <!-- Content -->
+                  <div style="padding:30px;">
+                    <h2 style="color:#333;">
+                      Hi ${user.name},
+                    </h2>
+
+                    <p style="font-size:16px;color:#555;line-height:1.6;">
+                      Great news! We've just added a new show for
+                      <strong>${movieTitle}</strong>.
+                    </p>
+
+                    <div style="background:#fafafa;border:1px solid #eeeeee;border-radius:10px;padding:20px;margin:25px 0;">
+                      <h3 style="margin:0;color:#E50914;">
+                        🍿 ${movieTitle}
+                      </h3>
+
+                      <p style="margin-top:12px;color:#555;">
+                        Seats are now open for booking. Grab your favorite seats before they sell out!
+                      </p>
+                    </div>
+
+                    <div style="text-align:center;margin-top:30px;">
+                      <a
+                        href="${process.env.CLIENT_URL}/movies/${movieId}"
+                        style="
+                          background:#E50914;
+                          color:white;
+                          text-decoration:none;
+                          padding:14px 30px;
+                          border-radius:8px;
+                          display:inline-block;
+                          font-weight:bold;
+                        "
+                      >
+                        Book Now 🎟️
+                      </a>
+                    </div>
+
+                    <p style="margin-top:30px;color:#666;">
+                      Don't miss the chance to experience this movie on the big screen!
+                    </p>
+                  </div>
+
+                  <!-- Footer -->
+                  <div style="background:#f8f9fa;padding:20px;text-align:center;color:#777;">
+                    <p style="margin:0;">
+                      Thanks for choosing <strong>QuickShow</strong>
+                    </p>
+                    <p style="font-size:12px;margin-top:10px;">
+                      This is an automated notification email.
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            `,
+          })
+        )
+      );
+    });
+  }
+);
 
 // Create an empty array where we'll export future Inngest functions
-const functions = [syncUserCreation, syncUserDeletion,syncUserUpdate,releaseSeatsAndDeleteBooking,sendBookingConfirmationEmail];
+const functions = [syncUserCreation, syncUserDeletion,syncUserUpdate,releaseSeatsAndDeleteBooking,sendBookingConfirmationEmail, sendShowReminders,sendNewShowNotification];
 
 module.exports = { inngest , functions };

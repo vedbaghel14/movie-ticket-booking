@@ -1,3 +1,4 @@
+const { inngest } = require('../inngest')
 const tmdb = require('../lib/tmdb')
 const movieModel = require('../models/movies.model')
 const showModel = require('../models/show.model')
@@ -128,6 +129,11 @@ const addShow = async (req, res) => {
         if (showsToCreate.length > 0) {
             await showModel.insertMany(showsToCreate);
         }
+        //trigger inngest event
+        await inngest.send({
+            name:"app/show.added",
+            data:{movieTitle:movie.title}
+        })
         res.json({ success: true, message: "show added successfully" })
     }
     catch (err) {
