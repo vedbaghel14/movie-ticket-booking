@@ -1,5 +1,6 @@
 const stripePkg = require('stripe')
 const bookingModel = require('../models/booking.model')
+const { inngest } = require('../inngest')
 
 /**
  * Stripe webhook handler
@@ -37,6 +38,11 @@ const handleWebhook = async (req, res) => {
             booking.checkoutSessionId = session.id
             await booking.save()
             console.log(`Booking ${bookingId} marked paid via webhook.`)
+            await inngest.send({
+              name: 'app/show.booked',
+              data: { bookingId: booking._id.toString() },
+            })
+            console.log(`Sent app/show.booked event for booking ${bookingId}`)
           }
         }
         break
