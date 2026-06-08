@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { dateFormat } from '../lib/dateFormat'
-import { userApi } from '../lib/api'
+import { bookingApi, userApi } from '../lib/api'
 import { useAppContext } from '../context/Appcontext'
 import { imageUrl } from '../lib/imageUrl'
 import Loading from '../components/Loading'
@@ -15,8 +17,11 @@ function timeFormat(runtime) {
 const MyBookings = () => {
   const currency = '$'
   const { getToken } = useAppContext()
+  const location = useLocation()
   const [bookings, setBookings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isPaying, setIsPaying] = useState(false)
+  const [payingBookingId, setPayingBookingId] = useState(null)
   const [error, setError] = useState(null)
 
   const getMyBookings = async () => {
@@ -37,9 +42,50 @@ const MyBookings = () => {
     }
   }
 
+  const verifySession = async (sessionId) => {
+    try {
+      const token = await getToken()
+      await bookingApi.verifySession(sessionId, token)
+      toast.success('Payment confirmed!')
+      getMyBookings()
+      window.history.replaceState(null, '', window.location.pathname)
+    } catch (err) {
+      console.error('[MyBookings] verifySession failed:', err)
+      toast.error(err.message || 'Could not verify payment.')
+    }
+  }
+
+  const handlePayNow = async (bookingId) => {
+    try {
+      setPayingBookingId(bookingId)
+      setIsPaying(true)
+      const token = await getToken()
+      const data = await bookingApi.pay(bookingId, token)
+      if (data?.success && data?.url) {
+        window.location.href = data.url
+        return
+      }
+      throw new Error('Could not create payment session')
+    } catch (err) {
+      console.error('[MyBookings] Payment retry failed:', err)
+      toast.error(err.message || 'Could not start payment. Please try again.')
+    } finally {
+      setIsPaying(false)
+      setPayingBookingId(null)
+    }
+  }
+
   useEffect(() => {
     getMyBookings()
   }, [])
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search)
+    const sessionId = searchParams.get('session_id')
+    if (sessionId) {
+      verifySession(sessionId)
+    }
+  }, [location.search])
 
   if (isLoading) {
     return (
@@ -74,8 +120,16 @@ const MyBookings = () => {
                 </div>
                 <div className="booking-card__summary">
                   <strong>{currency}{booking.amount}</strong>
-                  {booking.isPaid ? null : (
-                    <button className="primary-button primary-button--small">Pay Now</button>
+                  {booking.isPaid ? (
+                    <span className="badge badge--success">Paid</span>
+                  ) : (
+                    <button
+                      className="primary-button primary-button--small"
+                      onClick={() => handlePayNow(booking._id)}
+                      disabled={isPaying && payingBookingId === booking._id}
+                    >
+                      {isPaying && payingBookingId === booking._id ? 'Redirecting...' : 'Pay Now'}
+                    </button>
                   )}
                   <div>
                     <p>Total Tickets: <b>{booking.bookedSeats?.length}</b></p>

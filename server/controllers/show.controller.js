@@ -247,6 +247,7 @@ const getPublicNowPlaying = async (req, res) => {
     try {
         const movies = await getNowPlayingSafe()
         res.json({ success: true, movies })
+      
     }
     catch (err) {
         console.log(err)

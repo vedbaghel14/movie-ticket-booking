@@ -7,6 +7,7 @@ const bookingSchema = new mongoose.Schema({
     bookedSeats:{type:Array,required:true},
     isPaid:{type:Boolean,default:false},
     paymentLink:{type:String},
+    checkoutSessionId:{type:String},
 },{timestamps:true})
 
 const bookingmodel = mongoose.model('booking',bookingSchema)

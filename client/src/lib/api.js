@@ -154,6 +154,24 @@ export const bookingApi = {
     api.post('/booking/create', data, {
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  /**
+   * POST /api/booking/pay/:bookingId
+   * Body: none
+   */
+  pay: (bookingId, token) =>
+    api.post(`/booking/pay/${bookingId}`, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  /**
+   * GET /api/booking/verify/:sessionId
+   * Response: { success }
+   */
+  verifySession: (sessionId, token) =>
+    api.get(`/booking/verify/${sessionId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
 }
 
 // ---------------------------------------------------------------------------

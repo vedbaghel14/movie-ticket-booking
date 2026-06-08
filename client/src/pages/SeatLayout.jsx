@@ -167,10 +167,13 @@ const SeatLayout = () => {
     setSubmitting(true)
     try {
       const token = await getToken()
-      await bookingApi.create({ showId: selectedShowId, selectedSeats }, token)
-      toast.success('Booking successful!')
-      window.scrollTo(0, 0)
-      navigate('/my-bookings')
+      const data = await bookingApi.create({ showId: selectedShowId, selectedSeats }, token)
+      if (data?.success && data?.url) {
+        toast.success('Redirecting to payment...')
+        window.location.href = data.url
+        return
+      }
+      throw new Error('Could not start payment session')
     } catch (err) {
       console.error('[SeatLayout] Booking failed:', err)
       toast.error(err.message || 'Booking failed. Please try again.')
